@@ -25,6 +25,13 @@ export default function Layout() {
           title: 'Perfil',
         }}
       />
+      <Tabs.Screen
+        name="galeria"
+        options={{
+          title: 'Galeria',
+          
+        }}
+      />
     </Tabs>
   );
 }
