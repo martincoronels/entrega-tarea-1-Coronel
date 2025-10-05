@@ -48,8 +48,8 @@ By default this value is 'http://MyIP:3000', which assumes that the
 backend is running on the same machine on port 3000. If your Express
 server runs on a different host or port, update this constant accordingly.
 
-The Galería screen issues a GET ${API_BASE_URL}/products on mount to
-populate the list and uses POST ${API_BASE_URL}/products when saving a new
+The Galería screen issues a GET API_BASE_URL/products on mount to
+populate the list and uses POST API_BASE_URL/products when saving a new
 product from the modal form.
 
 Refer to the backend project's README for instructions on setting up the
