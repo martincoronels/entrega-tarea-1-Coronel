@@ -35,6 +35,26 @@ npm run reset-project
 
 This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
+## Backend configuration
+
+The Galería screen no longer uses a hardcoded mock of products. Instead it
+fetches data from a small Express/Prisma backend and allows you to create
+products via a POST request. To point the app at your API you only need to
+edit a single file:
+
+- config.tsx – contains an exported constant named API_BASE_URL.
+
+By default this value is 'http://MyIP:3000', which assumes that the
+backend is running on the same machine on port 3000. If your Express
+server runs on a different host or port, update this constant accordingly.
+
+The Galería screen issues a GET ${API_BASE_URL}/products on mount to
+populate the list and uses POST ${API_BASE_URL}/products when saving a new
+product from the modal form.
+
+Refer to the backend project's README for instructions on setting up the
+server and database.
+
 ## Learn more
 
 To learn more about developing your project with Expo, look at the following resources:
