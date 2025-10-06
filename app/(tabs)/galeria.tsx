@@ -1,31 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import {
-  FlatList,
-  Image,
-  ImageResizeMode,
-  ImageSourcePropType,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import React, { useState } from 'react';
+import { FlatList, Image, ImageResizeMode, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import ProductoCard from '../../components/Producto';
+import { useProductos, type Producto } from '../../hooks/useProductos';
 
-//const API_BASE_URL = 'http://192.168.0.184:3000';
-import { API_BASE_URL } from '../../config';
-
-type Producto = {
-    id: string;
-    titulo: string;
-    precio: number;
-    descripcion: string;
-    imagen: ImageSourcePropType;
-};
 
 export default function Galeria() {
 
-    const [productos, setProductos] = useState<Producto[]>([]);
+    const { productos, crearProducto } = useProductos();
     const [filtro, setFiltro] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
     const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
@@ -37,33 +18,9 @@ export default function Galeria() {
     const [nuevoDescripcion, setNuevoDescripcion] = useState('');
     const [nuevoImagen, setNuevoImagen] = useState('');
 
-    useEffect(() => {
-      const fetchProductos = async () => {
-        try {
-          const response = await fetch(`${API_BASE_URL}/products`);
-          const data = await response.json();
-
-          const mapped: Producto[] = data.map((p: any) => ({
-            id: p.id,
-            titulo: p.titulo,
-            precio: p.precio,
-            descripcion: p.descripcion,
-            imagen: { uri: p.imagen },
-          }));
-
-          setProductos(mapped);
-        } catch (error) {
-          console.error('Error en fetchProductos', error);
-        }
-      };
-      fetchProductos();
-    }, []);
-
-
     const filtrarProductos = productos.filter((p) =>
       p.titulo.toLowerCase().includes(filtro.toLowerCase()),
     );
-
 
     const toggleFavorito = (id: string) => {
       setFavoritos((prev) =>
@@ -71,46 +28,20 @@ export default function Galeria() {
       );
     };
 
-
-    const crearProducto = async () => {
-      if (!nuevoTitulo || !nuevoPrecio || !nuevoDescripcion || !nuevoImagen) {
-        return;
-      }
-      try {
-        const body = {
-          titulo: nuevoTitulo,
-          precio: parseFloat(nuevoPrecio),
-          descripcion: nuevoDescripcion,
-          imagen: nuevoImagen,
-        };
-        const response = await fetch(`${API_BASE_URL}/products`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-        });
-        const nuevo = await response.json();
-
-        const productoConvertido: Producto = {
-          id: nuevo.id,
-          titulo: nuevo.titulo,
-          precio: nuevo.precio,
-          descripcion: nuevo.descripcion,
-          imagen: { uri: nuevo.imagen },
-        };
-
-        setProductos((prev) => [...prev, productoConvertido]);
-
-        setNuevoTitulo('');
-        setNuevoPrecio('');
-        setNuevoDescripcion('');
-        setNuevoImagen('');
-        setModalNuevoVisible(false);
-      } catch (error) {
-        console.error('Error en la creacion del producto', error);
-      }
-    };
+    const onCrearProducto = async () => {
+      if (!nuevoTitulo || !nuevoPrecio || !nuevoDescripcion || !nuevoImagen) return;
+      await crearProducto({
+        titulo: nuevoTitulo,
+        precio: parseFloat(nuevoPrecio),
+        descripcion: nuevoDescripcion,
+        imagen: nuevoImagen,
+      });
+      setNuevoTitulo('');
+      setNuevoPrecio('');
+      setNuevoDescripcion('');
+      setNuevoImagen('');
+      setModalNuevoVisible(false);
+  };
 
     return (
       <View style={styles.container}>
@@ -126,30 +57,23 @@ export default function Galeria() {
           data={filtrarProductos}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <Pressable
+            <ProductoCard
+              producto={item}
+              isFavorito={favoritos.includes(item.id)}
               onPress={() => {
                 setProductoSeleccionado(item);
                 setResizeMode('contain');
                 setModalVisible(true);
               }}
               onLongPress={() => toggleFavorito(item.id)}
-              style={[styles.item, favoritos.includes(item.id) && styles.favorito]}
-            >
-              <Image source={item.imagen} style={styles.imagenMini} />
-              <View style={styles.textos}>
-                <Text style={styles.titulo}>{item.titulo}</Text>
-                <Text>${item.precio}</Text>
-              </View>
-            </Pressable>
+            />
           )}
         />
 
-        { }
         <Pressable style={styles.botonNuevo} onPress={() => setModalNuevoVisible(true)}>
           <Text style={styles.botonNuevoTexto}>Nuevo producto</Text>
         </Pressable>
 
-        { }
         <Modal visible={modalVisible} animationType="slide" transparent={true}>
           <View style={styles.modalFondo}>
             <View style={styles.modalContenido}>
@@ -182,8 +106,7 @@ export default function Galeria() {
             </View>
           </View>
         </Modal>
-
-        { }
+        
         <Modal visible={modalNuevoVisible} animationType="slide" transparent={true}>
           <View style={styles.modalFondo}>
             <View style={styles.modalContenido}>
@@ -220,7 +143,7 @@ export default function Galeria() {
                 onChangeText={setNuevoImagen}
               />
 
-              <Pressable style={styles.botonGuardar} onPress={crearProducto}>
+              <Pressable style={styles.botonGuardar} onPress={onCrearProducto}>
                 <Text style={{ color: 'white' }}>Guardar</Text>
               </Pressable>
               <Pressable style={[styles.botonCerrar, { marginTop: 10 }]} onPress={() => setModalNuevoVisible(false)}>
@@ -246,25 +169,6 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     borderRadius: 8,
     backgroundColor: 'white',
-  },
-  item: {
-    flexDirection: 'row',
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 10,
-    backgroundColor: '#c4c2c2ff',
-    alignItems: 'center',
-  },
-  favorito: {
-    backgroundColor: '#92fb90ff',
-  },
-  imagenMini: {
-    width: 60,
-    height: 60,
-    marginRight: 12,
-  },
-  textos: {
-    flex: 1,
   },
   titulo: {
     fontSize: 18,
